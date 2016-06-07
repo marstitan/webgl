@@ -2,10 +2,9 @@
  * Created by mac on 5/31/16.
  */
 var VSHADER_SOURCE = "attribute vec4 a_Position;\n"
-    + "uniform float u_CosB,u_SinB;\n"
+    + "uniform mat4 u_Matrix;\n"
     + "void main(){\n"
-    + "gl_Position.x = a_Position.x*u_CosB - a_Position.y*u_SinB;\n"
-    + "gl_Position.y = a_Position.x*u_SinB + a_Position.y*u_CosB;\n"
+    + "gl_Position = u_Matrix*a_Position;\n"
     + "}\n";
 
 var FSHADER_SOURCE = "precision mediump float;\n"
@@ -35,18 +34,19 @@ function main() {
     var cosB = Math.cos(radian);
     var sinB = Math.sin(radian);
 
-    var u_CosB = gl.getUniformLocation(gl.program, "u_CosB");
-    if (!u_CosB) {
-        console.log("failed to get u_CosB");
+    var xMatirx = new Float32Array([
+        1.5, 0.0, 0.0, 0.0,
+        0.0, 1.5, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    ]);
+
+    var u_Matrix = gl.getUniformLocation(gl.program, "u_Matrix");
+    if (!u_Matrix) {
+        console.log("failed to get u_Matrix");
         return;
     }
-    var u_SinB = gl.getUniformLocation(gl.program, "u_SinB");
-    if (!u_SinB) {
-        console.log("failed to get u_SinB");
-        return;
-    }
-    gl.uniform1f(u_CosB, cosB);
-    gl.uniform1f(u_SinB, sinB);
+    gl.uniformMatrix4fv(u_Matrix, false, xMatirx);
     gl.drawArrays(gl.TRIANGLES, 0, n);
 }
 function initVertextBuffers(gl) {
