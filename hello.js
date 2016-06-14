@@ -13,9 +13,17 @@ var FSHADER_SOURCE = "precision mediump float;\n"
     + "gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
     + "}\n";
 
-var ANGLE = 90.0;
+var ANGLE = 45.0;
 function main() {
     var canvas = document.getElementById("webgl");
+    var up = document.getElementById("up");
+    var down = document.getElementById("down");
+    up.onclick = function () {
+        ANGLE += 10;
+    };
+    down.onclick = function () {
+        ANGLE -= 10;
+    }
     var gl = getWebGLContext(canvas);
     if (!gl) {
         console.log("fail to get context of webgl");
@@ -30,24 +38,38 @@ function main() {
         console.log("fail to set positions of the vertics");
         return;
     }
-    var radian = Math.PI / 180.0 * ANGLE;
-    var cosB = Math.cos(radian);
-    var sinB = Math.sin(radian);
-
-    var xMatirx = new Float32Array([
-        1.5, 0.0, 0.0, 0.0,
-        0.0, 1.5, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
-    ]);
-
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    var curAngle = 0;
+    var xformMatrix = new Matrix4();
     var u_Matrix = gl.getUniformLocation(gl.program, "u_Matrix");
     if (!u_Matrix) {
         console.log("failed to get u_Matrix");
         return;
     }
-    gl.uniformMatrix4fv(u_Matrix, false, xMatirx);
+
+    var tick = function () {
+        curAngle = animate(curAngle);
+        draw(gl, n, curAngle, xformMatrix, u_Matrix);
+        requestAnimationFrame(tick);
+    }
+    tick();
+}
+function draw(gl, n, curAngle, modelMatrix, u_Matrix) {
+
+    modelMatrix.setRotate(curAngle, 0, 0, 1);
+    modelMatrix.translate(0.35, 0, 0);
+    gl.uniformMatrix4fv(u_Matrix, false, modelMatrix.elements);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, n);
+
+}
+var g_Last = Date.now();
+function animate(angle) {
+    var now = Date.now();
+    var elapse = now - g_Last;
+    g_Last = now;
+    var newAngle = angle + (ANGLE * elapse) / 1000;
+    return newAngle %= 360;
 }
 function initVertextBuffers(gl) {
     var n = 4;
