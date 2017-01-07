@@ -5,7 +5,6 @@ var VSHADER_SOURCE =
     'attribute vec4 a_Position;\n'+
     'void main(){\n'+
     'gl_Position = a_Position;\n'+
-    'gl_PointSize = 10.0;\n'+
     '}\n';
 var FSHADER_SOURCE =
     'precision mediump float;\n'+
@@ -14,8 +13,10 @@ var FSHADER_SOURCE =
     'gl_FragColor = u_FragColor;\n'+
     '}\n';
 function initVertexBuffers(gl){
-    var vertices = new Float32Array([0.0,0.5,-0.5,-0.5,0.5,-0.5]);
-    var n = 3;
+    var vertices = new Float32Array([
+       -0.5,0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5
+    ]);
+    var n = 4;
 
     var vertexBuffer = gl.createBuffer();
     if(!vertexBuffer){
@@ -59,7 +60,7 @@ function main(){
     }
     gl.clearColor(0.0,0.0,0.0,1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.POINTS,0,n);
+    gl.drawArrays(gl.TRIANGLE_FAN,0,n);
 
     //canvas.onmousedown = function(evt){
     //    click(evt,gl,canvas,a_Position,u_FragColor);
