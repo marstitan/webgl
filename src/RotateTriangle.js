@@ -57,26 +57,23 @@ function main(){
         console.log('Failed to set buffer object');
         return;
     }
-
+    //bg color
+    gl.clearColor(0.0,0.0,0.0,1.0);
+    //frag color
     var u_FragColor = gl.getUniformLocation(gl.program,'u_FragColor');
     gl.uniform4f(u_FragColor,1.0,0.0,0.0,1.0);
-
-    var radian = Math.PI*ANGLE/180.0;
-    var cosB = Math.cos(radian);
-    var sinB = Math.sin(radian);
-    var modelMatrix = new Float32Array([
-        cosB,sinB,0.0,0.0,
-        -sinB,cosB,0.0,0.0,
-        0.0,0.0,1.0,0.0,
-        0.0,0.0,0.0,1.0
-    ]);
+    //model matrix
+    var modelMatrix = new Matrix4();
     var u_ModelMatrix = gl.getUniformLocation(gl.program,'u_ModelMatrix');
-    gl.uniformMatrix4fv(u_ModelMatrix,false,modelMatrix);
+    gl.uniformMatrix4fv(u_ModelMatrix,false,modelMatrix.elements);
 
-
-    gl.clearColor(0.0,0.0,0.0,1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_STRIP,0,n);
+    var curAngle = 0.0;
+    var tick = function(){
+        curAngle = animate(curAngle);
+        draw(gl,n,curAngle,modelMatrix,u_ModelMatrix);
+        requestAnimationFrame(tick);
+    };
+    tick();
 
     //canvas.onmousedown = function(evt){
     //    click(evt,gl,canvas,a_Position,u_FragColor);
