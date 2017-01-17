@@ -3,9 +3,10 @@
  */
 var VSHADER_SOURCE =
     'attribute vec4 a_Position;\n' +
-    'uniform mat4 u_ModelMatrix;\n' +
+    'attribute float a_PointSize;' +
     'void main(){\n' +
-    'gl_Position = u_ModelMatrix*a_Position;\n' +
+    'gl_Position = a_Position;\n' +
+    'gl_PointSize = a_PointSize;\n' +
     '}\n';
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
@@ -18,12 +19,25 @@ function initVertexBuffers(gl) {
         -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, -0.5
     ]);
     var n = 4;
+    var sizes = new Float32Array([
+        10.0, 20.0, 30.0, 40.0
+    ]);
 
     var vertexBuffer = gl.createBuffer();
     if (!vertexBuffer) {
         console.log('Failed to create buffer object');
         return -1;
     }
+    var sizeBuffer = gl.createBuffer();
+    if(!sizeBuffer){
+        console.log("Failed to create buffer object");
+        return -1;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER,sizeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER,sizes,gl.STATIC_DRAW);
+    var a_PointSize = gl.getAttribLocation(gl.program,'a_PointSize');
+    gl.vertexAttribPointer(a_PointSize,1,gl.FLOAT,false,0,0);
+    gl.enableVertexAttribArray(a_PointSize);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
@@ -36,7 +50,6 @@ function initVertexBuffers(gl) {
     return n;
 
 }
-var ANGLE_STEP = 0.1;
 function main() {
     var canvas = document.getElementById("example");
     if (!canvas) {
@@ -52,45 +65,18 @@ function main() {
         console.log("fail to init shaders");
         return false;
     }
+    var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+    gl.uniform4f(u_FragColor, 1.0, 0.0, 0.0, 1.0);
+
     var n = initVertexBuffers(gl);
     if (n < 0) {
         console.log('Failed to set buffer object');
         return;
     }
-    //bg color
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    //frag color
-    var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
-    gl.uniform4f(u_FragColor, 1.0, 0.0, 0.0, 1.0);
-    //model matrix
-    var modelMatrix = new Matrix4();
-    var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
-    var curAngle = 0.0;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, n);
 
-    var g_last = Date.now();
-    function animate(angle) {
-        var now = Date.now();
-        var elapsed = now - g_last;
-        g_last = now;
-        var newAngle = angle + (ANGLE_STEP * elapsed);
-        return newAngle % 360;
-
-    }
-
-    function draw(gl,n,currentAngle,modelMatrix,u_ModelMatrix){
-        modelMatrix.setRotate(currentAngle,0,0,1);
-        modelMatrix.translate(0.8,0.0,0.0);
-        gl.uniformMatrix4fv(u_ModelMatrix,false,modelMatrix.elements);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES,0,n);
-    }
-
-    var tick = function () {
-        curAngle = animate(curAngle);
-        draw(gl, n, curAngle, modelMatrix, u_ModelMatrix);
-        requestAnimationFrame(tick);
-    };
-    tick();
     //canvas.onmousedown = function(evt){
     //    click(evt,gl,canvas,a_Position,u_FragColor);
     //};
