@@ -3,25 +3,26 @@
  */
 var VSHADER_SOURCE =
     'attribute vec4 a_Position;\n' +
-    'attribute float a_PointSize;' +
+    'attribute vec4 a_Color;\n' +
+    'varying vec4 v_Color;\n' +
     'void main(){\n' +
     'gl_Position = a_Position;\n' +
-    'gl_PointSize = a_PointSize;\n' +
+    'gl_PointSize = 10.0;\n' +
+    'v_Color = a_Color;\n' +
     '}\n';
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
-    'uniform vec4 u_FragColor;\n' +
+    'varying vec4 v_Color;\n' +
     'void main(){\n' +
-    'gl_FragColor = u_FragColor;\n' +
+    'gl_FragColor = v_Color;\n' +
     '}\n';
 function initVertexBuffers(gl) {
     var vertices = new Float32Array([
-        -0.5, 0.5, 10.0,
-        -0.5, -0.5,20.0,
-        0.5, 0.5, 30.0,
-        0.5, -0.5,40.0
+        -0.5, 0.5, 1.0, 0.0, 0.0,
+        -0.5, -0.5, 0.0, 1.0, 0.0,
+        0.5, 0.5, 0.0, 0.0, 1.0,
     ]);
-    var n = 4;
+    var n = 3;
     var FSIZE = vertices.BYTES_PER_ELEMENT;
 
     var vertexBuffer = gl.createBuffer();
@@ -33,12 +34,12 @@ function initVertexBuffers(gl) {
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 3*FSIZE, 0);
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 5 * FSIZE, 0);
     gl.enableVertexAttribArray(a_Position);
 
-    var a_PointSize = gl.getAttribLocation(gl.program,'a_PointSize');
-    gl.vertexAttribPointer(a_PointSize,1,gl.FLOAT,false,3*FSIZE,2*FSIZE);
-    gl.enableVertexAttribArray(a_PointSize);
+    var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
+    gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, 5 * FSIZE, 2 * FSIZE);
+    gl.enableVertexAttribArray(a_Color);
 
     return n;
 
@@ -68,7 +69,7 @@ function main() {
     }
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.POINTS, 0, n);
+    gl.drawArrays(gl.TRIANGLES, 0, n);
 
     //canvas.onmousedown = function(evt){
     //    click(evt,gl,canvas,a_Position,u_FragColor);
