@@ -11,38 +11,60 @@ var VSHADER_SOURCE =
     '}\n';
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
-    'uniform sampler2D u_Sampler;\n' +
+    'uniform sampler2D u_Sampler0;\n' +
+    'uniform sampler2D u_Sampler1;\n' +
     'varying vec2 v_TexCoord;\n' +
     'void main(){\n' +
-    'gl_FragColor = texture2D(u_Sampler,v_TexCoord);\n' +
+    'vec4 color0 = texture2D(u_Sampler0,v_TexCoord);\n' +
+    'vec4 color1 = texture2D(u_Sampler1,v_TexCoord);\n' +
+    'gl_FragColor = color0*color1;\n' +
     '}\n';
 function initTextures(gl, n) {
-    var texture = gl.createTexture();
-    var u_Sampler = gl.getUniformLocation(gl.program, 'u_Sampler');
-    var image = new Image();
-    image.onload = function () {
-        loadTexture(gl, n, texture, u_Sampler, image);
+    var texture0 = gl.createTexture();
+    var u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
+    var texture1 = gl.createTexture();
+    var u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
+    var image0 = new Image();
+    image0.onload = function () {
+        loadTexture(gl, n, texture0, u_Sampler0, image0, 0);
     };
-    image.src = '../resources/sky.jpg';
+    image0.src = '../resources/sky.jpg';
+    var image1 = new Image();
+    image1.onload = function () {
+        loadTexture(gl, n, texture1, u_Sampler1, image1, 1);
+    };
+    image1.src = '../resources/circle.gif';
     return true;
 
 }
-function loadTexture(gl, n, texture, u_Sampler, image) {
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-    gl.activeTexture(gl.TEXTURE0);
+var g_Tex0 = false, g_Tex1 = false;
+function loadTexture(gl, n, texture, u_Sampler, image, tetUnit) {
+    if(tetUnit == 0){
+        gl.activeTexture(gl.TEXTURE0);
+        g_Tex0 = true;
+    }else{
+        gl.activeTexture(gl.TEXTURE1);
+        g_Tex1 = true;
+    }
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-    gl.uniform1i(u_Sampler, 0);
+    gl.uniform1i(u_Sampler, tetUnit);
+    if(g_Tex0 && g_Tex1){
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, n);
+    }
 }
 function initVertexBuffers(gl) {
     var vertices = new Float32Array([
         -0.5, 0.5, 0.0, 1.0,
-        -0.5, -0.5, 0.0, 0.0,
+        -0.5, -0.5, 0.0, 0.2,
         0.5, 0.5, 1.0, 1.0,
         0.5, -0.5, 1.0, 0.0,
     ]);
-    var n = 3;
+    var n = 4;
     var FSIZE = vertices.BYTES_PER_ELEMENT;
 
     var vertexBuffer = gl.createBuffer();
@@ -84,13 +106,11 @@ function main() {
         console.log('Failed to set buffer object');
         return;
     }
-    if(!initTextures(gl,n)){
+    if (!initTextures(gl, n)) {
         console.log('Failed to init texture');
         return;
     }
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, n);
+
 
     //canvas.onmousedown = function(evt){
     //    click(evt,gl,canvas,a_Position,u_FragColor);
