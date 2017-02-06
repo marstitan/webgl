@@ -18,19 +18,15 @@ var FSHADER_SOURCE =
     '}\n';
 function initVertexBuffers(gl) {
     var vertices = new Float32Array([
-        0.0, 1.0, -4.0, 0.4, 1.0, 0.4,
-        -0.5, -1.0, -4.0, 0.4, 1.0, 0.4,
-        0.5, -1.0, -4.0, 1.0, 0.4, 0.4,
+        0.0, 2.5, -5.0, 0.0, 1.0, 0.0,
+        -2.5, -2.5, -5.0, 0.0, 1.0, 0.0,
+        2.5, -2.5, -5.0, 1.0, 0.0, 0.0,
 
-        0.0, 1.0, -2.0, 1.0, 1.0, 0.4,
-        -0.5, -1.0, -2.0, 1.0, 1.0, 0.4,
-        0.5, -1.0, -2.0, 1.0, 0.4, 0.4,
-
-        0.0, 1.0, -10.0, 0.4, 0.4, 1.0,
-        -0.5, -1.0, -10.0, 0.4, 0.4, 1.0,
-        0.5, -1.0, -10.0, 1.0, 0.4, 0.4,
+        0.0, 3.0, -5.0, 1.0, 0.0, 0.0,
+        -3.0, -3.0, -5.0, 1.0, 1.0, 0.0,
+        3.0, -3.0, -5.0, 1.0,1.0, 0.0,
     ]);
-    var n = 9;
+    var n = 6;
     var FSIZE = vertices.BYTES_PER_ELEMENT;
 
     var vertexBuffer = gl.createBuffer();
@@ -89,15 +85,18 @@ function main() {
 
     viewMatrix.setLookAt(0,0,5,0,0,-100,0,1,0);
     projMatrix.setPerspective(30,canvas.width/canvas.height,1,100);
-    modelMatrix.setTranslate(0.75,0,0);
+    modelMatrix.setTranslate(0,0,0);
     mvpMatrix.set(projMatrix).multiply(viewMatrix).multiply(modelMatrix);
 
     gl.uniformMatrix4fv(u_MVPMatrix,false,mvpMatrix.elements);
 
     gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.clear(gl.DEPTH_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES,0,n);
+    gl.drawArrays(gl.TRIANGLES,0,n/2);
+    gl.polygonOffset(1.0,1.0);
+    gl.drawArrays(gl.TRIANGLES,n/2,n/2);
 
     document.onkeydown = function (evt) {
         keydown(evt, gl, n, u_ModelViewMatrix, viewMatrix);
