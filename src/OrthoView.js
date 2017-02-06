@@ -4,11 +4,10 @@
 var VSHADER_SOURCE =
     'attribute vec4 a_Position;\n' +
     'attribute vec4 a_Color;\n' +
-    'uniform mat4 u_ModelViewMatrix;\n' +
-    'uniform mat4 u_ProjectMatrix;\n' +
+    'uniform mat4 u_MVPMatrix;\n' +
     'varying vec4 v_Color;\n' +
     'void main(){\n' +
-    'gl_Position = u_ProjectMatrix*u_ModelViewMatrix*a_Position;\n' +
+    'gl_Position = u_MVPMatrix*a_Position;\n' +
     'v_Color = a_Color;\n' +
     '}\n';
 var FSHADER_SOURCE =
@@ -65,6 +64,7 @@ function main() {
         console.log("fail to get canvas");
         return false;
     }
+    var nf = document.getElementById('nearFar');
     var gl = getWebGLContext(canvas);
     if (!gl) {
         console.log("fail to get gl context");
@@ -81,35 +81,39 @@ function main() {
         return;
     }
 
-    var viewMatrix = new Matrix4();
-    var u_ModelViewMatrix = gl.getUniformLocation(gl.program, 'u_ModelViewMatrix');
-    var u_ProjectMatrix = gl.getUniformLocation(gl.program,'u_ProjectMatrix');
-    var projMatrix = new Matrix4();
-    projMatrix.setOrtho(-1.0,1.0,-1.0,1.0,0.0,2.0);
-    gl.uniformMatrix4fv(u_ProjectMatrix,false,projMatrix.elements);
-
-
-    document.onkeydown = function (evt) {
-        keydown(evt, gl, n, u_ModelViewMatrix, viewMatrix);
-    };
-    draw(gl, n, u_ModelViewMatrix, viewMatrix);
-
-}
-var g_eyeX = 0.20, g_eyeY = 0.25, g_eyeZ = 0.25;
-function keydown(ev, gl, n, u_MVMatrix, mvMatrix) {
-    if (ev.keyCode == 39) {
-        g_eyeX += 0.01;
-    } else if (ev.keyCode == 37) {
-        g_eyeX -= 0.01;
-    } else {
-        return;
+    var u_MVPMatrix = gl.getUniformLocation(gl.program, 'u_MVPMatrix');
+    var mvpMatrix = new Matrix4();
+    document.onkeydown = function(ev){
+        keydown(ev,gl,n,u_MVPMatrix,mvpMatrix,nf);
     }
-    draw(gl, n, u_MVMatrix, mvMatrix);
-}
-function draw(gl, n, u_MVMatrix, mvMatrix) {
-    mvMatrix.setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
-    gl.uniformMatrix4fv(u_MVMatrix, false, mvMatrix.elements);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, n);
+    draw(gl,n,u_MVPMatrix,mvpMatrix,nf);
 
+}
+var g_near = 0.0, g_far = 0.5;
+function keydown(ev, gl, n, u_MVPMatrix, mvpMatrix, nf) {
+    switch (ev.keyCode) {
+        case 39:
+            g_near += 0.01;
+            break;
+        case 37:
+            g_near -= 0.01;
+            break;
+        case 38:
+            g_far += 0.01;
+            break;
+        case 40:
+            g_far -= 0.01;
+            break;
+        default :
+            return;
+    }
+    draw(gl,n,u_MVPMatrix,mvpMatrix,nf);
+}
+function draw(gl,n,u_MVPMatrix,mvpMatrix,nf){
+    mvpMatrix.setOrtho(-0.3,0.3,-1,1,g_near,g_far);
+    gl.uniformMatrix4fv(u_MVPMatrix, false, mvpMatrix.elements);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    nf.innerHTML = 'near: '+Math.round(g_near*100)/100+', far: '
+    +Math.round(g_far*100)/100;
+    gl.drawArrays(gl.TRIANGLES,0,n);
 }
