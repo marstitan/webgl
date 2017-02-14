@@ -4,11 +4,17 @@
 var VSHADER_SOURCE =
     'attribute vec4 a_Position;\n' +
     'attribute vec4 a_Color;\n' +
+    'attribute vec4 a_Normal;'+
     'uniform mat4 u_MVPMatrix;\n' +
+    'uniform vec3 u_LightColor;\n'+
+    'uniform vec3 u_LightDirection;\n'+
     'varying vec4 v_Color;\n' +
     'void main(){\n' +
     'gl_Position = u_MVPMatrix*a_Position;\n' +
-    'v_Color = a_Color;\n' +
+    'vec3 normal = normalize(vec3(a_Normal));\n'+
+     'float nDotL = max(dot(u_LightDirection,normal),0.0);\n'+
+     'vec3 diffuse = u_LightColor*vec3(a_Color)*nDotL;\n'+
+    'v_Color = vec4(diffuse,a_Color.a);\n' +
     '}\n';
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
@@ -32,8 +38,14 @@ function initVertexBuffers(gl) {
         1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,
         1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,
         1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,
-
-
+    ]);
+    var normals = new Float32Array([
+        0.0,0.0,1.0,0.0,0.0,1.0,0.0,0.0,1.0,0.0,0.0,1.0,
+        1.0,0.0,0.0,1.0,0.0,0.0,1.0,0.0,0.0,1.0,0.0,0.0,
+        0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        -1.0,0.0,0.0,-1.0,0.0,0.0,-1.0,0.0,0.0,-1.0,0.0,0.0,
+        0.0,-1.0,0.0, 0.0,-1.0,0.0, 0.0,-1.0,0.0, 0.0,-1.0,0.0,
+        0.0,0.0,-1.0,0.0,0.0,-1.0,0.0,0.0,-1.0,0.0,0.0,-1.0,
     ]);
     var indices = new Uint8Array([
         0,1,2,0,2,3,
@@ -47,6 +59,9 @@ function initVertexBuffers(gl) {
         return -1;
     }
     if (!initArrayBuffer(gl,colors,'a_Color',3,gl.FLOAT)) {
+        return -1;
+    }
+    if (!initArrayBuffer(gl,normals,'a_Normal',3,gl.FLOAT)) {
         return -1;
     }
     var indexBuffer = gl.createBuffer();
@@ -101,6 +116,14 @@ function main() {
     mvpMatrix.set(projMatrix).multiply(viewMatrix);
 
     gl.uniformMatrix4fv(u_MVPMatrix, false, mvpMatrix.elements);
+
+    var u_LightColor = gl.getUniformLocation(gl.program,'u_LightColor');
+    var u_LightDirection = gl.getUniformLocation(gl.program,'u_LightDirection');
+
+    gl.uniform3f(u_LightColor,1.0,1.0,1.0);
+    var lightDirection = new Vector3([0.5,3.0,4.0]);
+    lightDirection.normalize();
+    gl.uniform3fv(u_LightDirection,lightDirection.elements);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
