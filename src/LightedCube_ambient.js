@@ -6,13 +6,14 @@ var VSHADER_SOURCE =
     'attribute vec4 a_Color;\n' +
     'attribute vec4 a_Normal;'+
     'uniform mat4 u_MVPMatrix;\n' +
+    'uniform mat4 u_NormalMatrix;\n'+
     'uniform vec3 u_LightColor;\n'+
     'uniform vec3 u_LightDirection;\n'+
     'uniform vec3 u_AmbientLight;\n'+
     'varying vec4 v_Color;\n' +
     'void main(){\n' +
     'gl_Position = u_MVPMatrix*a_Position;\n' +
-    'vec3 normal = normalize(vec3(a_Normal));\n'+
+    'vec3 normal = normalize(vec3(u_NormalMatrix*a_Normal));\n'+
      'float nDotL = max(dot(u_LightDirection,normal),0.0);\n'+
      'vec3 diffuse = u_LightColor*vec3(a_Color)*nDotL;\n'+
     'vec3 ambient = u_AmbientLight*a_Color.rgb;\n'+
@@ -107,17 +108,26 @@ function main() {
         return;
     }
 
-    var u_MVPMatrix = gl.getUniformLocation(gl.program, 'u_MVPMatrix');
 
+
+    var u_MVPMatrix = gl.getUniformLocation(gl.program, 'u_MVPMatrix');
     var mvpMatrix = new Matrix4();
+    var modelMatrix = new Matrix4();
     var viewMatrix = new Matrix4();
     var projMatrix = new Matrix4();
 
+    modelMatrix.setTranslate(0,1,0);
+    modelMatrix.rotate(90,0,0,1);
     viewMatrix.setLookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
     projMatrix.setPerspective(30, canvas.width / canvas.height, 1, 100);
-    mvpMatrix.set(projMatrix).multiply(viewMatrix);
-
+    mvpMatrix.set(projMatrix).multiply(viewMatrix).multiply(modelMatrix);
     gl.uniformMatrix4fv(u_MVPMatrix, false, mvpMatrix.elements);
+
+    var normalMatrix = new Matrix4();
+    var u_NormalMatrix = gl.getUniformLocation(gl.program,'u_NormalMatrix');
+    normalMatrix.setInverseOf(modelMatrix);
+    normalMatrix.transpose();
+    gl.uniformMatrix4fv(u_NormalMatrix,false,normalMatrix.elements);
 
     var u_LightColor = gl.getUniformLocation(gl.program,'u_LightColor');
     var u_LightDirection = gl.getUniformLocation(gl.program,'u_LightDirection');
