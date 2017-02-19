@@ -8,25 +8,30 @@ var VSHADER_SOURCE =
     'uniform mat4 u_MVPMatrix;\n' +
     'uniform mat4 u_ModelMatrix;\n'+
     'uniform mat4 u_NormalMatrix;\n'+
+    'varying vec4 v_Color;\n' +
+    'varying vec3 v_Normal;\n'+
+    'varying vec3 v_Position;\n'+
+    'void main(){\n' +
+    'gl_Position = u_MVPMatrix*a_Position;\n' +
+    'v_Position = vec3(u_ModelMatrix*a_Position);\n'+
+    'v_Normal = normalize(vec3(u_NormalMatrix*a_Normal));\n'+
+    'v_Color = a_Color;\n' +
+    '}\n';
+var FSHADER_SOURCE =
+    'precision mediump float;\n' +
     'uniform vec3 u_LightColor;\n'+
     'uniform vec3 u_LightPosition;\n'+
     'uniform vec3 u_AmbientLight;\n'+
     'varying vec4 v_Color;\n' +
+    'varying vec3 v_Position;\n' +
+    'varying vec3 v_Normal;\n'+
     'void main(){\n' +
-    'gl_Position = u_MVPMatrix*a_Position;\n' +
-    'vec4 vertexPosition = u_ModelMatrix*a_Position;\n'+
-    'vec3 lightDirection = normalize(u_LightPosition - vec3(vertexPosition));\n'+
-    'vec3 normal = normalize(vec3(u_NormalMatrix*a_Normal));\n'+
-     'float nDotL = max(dot(lightDirection,normal),0.0);\n'+
-     'vec3 diffuse = u_LightColor*vec3(a_Color)*nDotL;\n'+
-    'vec3 ambient = u_AmbientLight*a_Color.rgb;\n'+
-    'v_Color = vec4(diffuse+ambient,a_Color.a);\n' +
-    '}\n';
-var FSHADER_SOURCE =
-    'precision mediump float;\n' +
-    'varying vec4 v_Color;\n' +
-    'void main(){\n' +
-    'gl_FragColor = v_Color;\n' +
+        'vec3 normal = normalize(v_Normal);\n'+
+        'vec3 lightDirection = normalize(u_LightPosition - v_Position);\n'+
+        'float ndotL = max(dot(lightDirection,normal),0.0);\n'+
+        'vec3 diffuse = u_LightColor*v_Color.rgb*ndotL;\n'+
+        'vec3 ambient = u_AmbientLight*v_Color.rgb;\n'+
+    'gl_FragColor = vec4(diffuse+ambient,v_Color.a);\n' +
     '}\n';
 function initVertexBuffers(gl) {
     var vertices = new Float32Array([
